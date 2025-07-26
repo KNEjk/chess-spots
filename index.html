@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Offentliga Schackbord</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+    #map { width: 100%; height: 100vh; }
+    .leaflet-popup-content input, .leaflet-popup-content textarea {
+      width: 100%;
+      margin-top: 5px;
+    }
+    .leaflet-popup-content button {
+      margin-top: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([59.3293, 18.0686], 5); // Stockholm
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function addMarker(board) {
+      L.marker([board.lat, board.lon])
+        .addTo(map)
+        .bindPopup("<b>" + board.name + "</b><br>" + board.info);
+    }
+
+    map.on('click', function(e) {
+      var lat = e.latlng.lat.toFixed(5);
+      var lon = e.latlng.lng.toFixed(5);
+
+      var popupContent = `
+        <b>Nytt schackbord</b><br>
+        <label>Platsens namn:<br><input type='text' id='chessName'></label><br>
+        <label>Beskrivning:<br><textarea id='chessInfo'></textarea></label>
+        <button onclick='saveChessboard(${lat}, ${lon})'>Lägg till</button>
+      `;
+
+      L.popup()
+        .setLatLng(e.latlng)
+        .setContent(popupContent)
+        .openOn(map);
+    });
+
+    // Skriv in din Google Apps Script Web App URL här:
+    const scriptURL = "https://script.google.com/macros/s/AKfycbz8x8K_Ce5exC3bKARYnVKtQgXAAWyMj2oUixSz4iTibXpD-82Ikx2x4r3A3jK7xYgz/exec";
+
+    window.saveChessboard = function(lat, lon) {
+      var name = document.getElementById("chessName").value || "Namnlös plats";
+      var info = document.getElementById("chessInfo").value || "Ingen beskrivning.";
+      var board = { name, lat, lon, info };
+      addMarker(board);
+      map.closePopup();
+
+      // Skicka till Google Sheets
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(board),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.text())
+      .then(data => console.log('Svar från Google Sheets:', data))
+      .catch(error => console.error('Fel vid sparande:', error));
+
+      alert("Schackbordet har lagts till och skickats till databasen.");
+    }
+
+    // Hämta alla marker från Google Sheets
+    function loadChessboards() {
+      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJK6pWDQcZVRX9xh6Ha-Vvwc8s7M1MPlmP8PJV4dcj8_lxGNv6-6lTB5ykPbvc4WiZ8VPKUO8RdUOs/pub?gid=0&single=true&output=csv";
+      fetch(sheetURL)
+        .then(res => res.text())
+        .then(csv => {
+          const rows = csv.split("\n").slice(1); // Skippa header
+          rows.forEach(row => {
+            const [name, info, lat, lon] = row.split(",");
+            if (!name || !lat || !lon) return;
+            addMarker({ name, info, lat: parseFloat(lat), lon: parseFloat(lon) });
+          });
+        });
+    }
+
+    loadChessboards();
+  </script>
+</body>
+</html>
