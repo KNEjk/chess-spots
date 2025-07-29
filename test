@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Test POST till GAS</title>
+</head>
+<body>
+  <h1>Testa POST mot Google Apps Script</h1>
+  <button id="sendBtn">Skicka testdata</button>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      const testData = {
+        name: "Testplats",
+        info: "Detta är ett test",
+        lat: 59.3293,
+        lon: 18.0686
+      };
+
+      fetch(scriptURL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(testData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("HTTP error, status = " + response.status);
+        }
+        return response.text();
+      })
+      .then(text => {
+        console.log("Svar från GAS:", text);
+        alert("Svar från server: " + text);
+      })
+      .catch(err => {
+        console.error("Fel vid fetch:", err);
+        alert("Fel vid fetch: " + err.message);
+      });
+    });
+  </script>
+</body>
+</html>
