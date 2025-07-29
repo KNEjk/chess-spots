@@ -1,119 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Offentliga Schackbord</title>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
-    #map { width: 100%; height: 100vh; }
-    .leaflet-popup-content input, .leaflet-popup-content textarea {
-      width: 100%;
-      margin-top: 5px;
-      box-sizing: border-box;
-    }
-    .leaflet-popup-content button {
-      margin-top: 10px;
-      display: block;
-      width: 100%;
-      padding: 6px;
-      background-color: #28a745;
-      border: none;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .leaflet-popup-content button:hover {
-      background-color: #218838;
-    }
-  </style>
+  <title>Test POST till GAS</title>
 </head>
 <body>
-  <div id="map"></div>
+  <h1>Testa POST mot Google Apps Script</h1>
+  <button id="sendBtn">Skicka testdata</button>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // Initiera kartan centrerad på Stockholm med zoom 5
-    var map = L.map('map').setView([59.3293, 18.0686], 5);
+    const scriptURL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
 
-    // Lägg till OpenStreetMap-tilelager
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // Funktion för att lägga till en markör på kartan
-    function addMarker(board) {
-      L.marker([board.lat, board.lon])
-        .addTo(map)
-        .bindPopup("<b>" + board.name + "</b><br>" + board.info);
-    }
-
-    // Visa popup med formulär vid klick på kartan
-map.on('click', function(e) {
-  var lat = e.latlng.lat.toFixed(5);
-  var lon = e.latlng.lng.toFixed(5);
-
-  var popupContent = `
-    <b>Nytt schackbord</b><br>
-    <label>Platsens namn:<br><input type='text' id='chessName'></label><br>
-    <label>Beskrivning:<br><textarea id='chessInfo'></textarea></label>
-    <button onclick='saveChessboard(${lat}, ${lon})'>Lägg till</button>
-  `;
-
-  L.popup()
-    .setLatLng(e.latlng)
-    .setContent(popupContent)
-    .openOn(map);
-});
-
-    // Din Google Apps Script Web App URL (byt ut mot din egen)
-    const scriptURL = "https://script.google.com/macros/s/AKfycbysNVgRsOipZsUi_HnjukNkB8tPHvLFceAPRnsuzNr5Pff_iylkk76lZOYcfdHgVer0/exec";
-
-    // Funktion för att skicka data till Google Sheets via Web App
-    window.saveChessboard = function(lat, lon) {
-      var name = document.getElementById("chessName").value || "Namnlös plats";
-      var info = document.getElementById("chessInfo").value || "Ingen beskrivning.";
-      var board = { name, lat, lon, info };
-      addMarker(board);
-      map.closePopup();
-
-      console.log("Skickar till script:", board);
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      const testData = {
+        name: "Testplats",
+        info: "Detta är ett test",
+        lat: 59.3293,
+        lon: 18.0686
+      };
 
       fetch(scriptURL, {
-        method: 'POST',
-        body: JSON.stringify(board),
-        headers: { 'Content-Type': 'application/json' }
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(testData)
       })
-      .then(response => response.text())
-      .then(data => {
-        console.log('Svar från Google Sheets:', data);
-        alert("Schackbordet har lagts till och skickats till databasen.");
+      .then(response => {
+        if (!response.ok) {
+          throw new Error("HTTP error, status = " + response.status);
+        }
+        return response.text();
       })
-      .catch(error => {
-        console.error('Fel vid sparande:', error);
-        alert("Fel vid sparande: " + error.message);
+      .then(text => {
+        console.log("Svar från GAS:", text);
+        alert("Svar från server: " + text);
+      })
+      .catch(err => {
+        console.error("Fel vid fetch:", err);
+        alert("Fel vid fetch: " + err.message);
       });
-    }
-
-    // Funktion för att läsa in befintliga schackbord från Google Sheets (CSV publicerad som "publik")
-    function loadChessboards() {
-      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgz13PmnINoNxPJP3AMFBidYJuXi7RDDZCD1lkFbAALt2CgR0yFWSFycu5fZltVGpPlO-W9Dp-osrS/pub?gid=0&single=true&output=csv";
-      fetch(sheetURL)
-        .then(res => res.text())
-        .then(csv => {
-          const rows = csv.split("\n").slice(1); // Skippa header-raden
-          rows.forEach(row => {
-            const [name, info, lat, lon] = row.split(",");
-            if (!name || !lat || !lon) return;
-            addMarker({ name, info, lat: parseFloat(lat), lon: parseFloat(lon) });
-          });
-        })
-        .catch(error => console.error("Fel vid inläsning av schackbord:", error));
-    }
-
-    loadChessboards();
+    });
   </script>
 </body>
 </html>
