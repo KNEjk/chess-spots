@@ -36,8 +36,8 @@
     }
 
     map.on('click', function(e) {
-      var lat = e.latlng.lat.toFixed(5);
-      var lon = e.latlng.lng.toFixed(5);
+      var lat = e.latlon.lat.toFixed(5);
+      var lon = e.latlon.lon.toFixed(5);
 
       var popupContent = `
         <b>Nytt schackbord</b><br>
@@ -47,7 +47,7 @@
       `;
 
       L.popup()
-        .setLatLng(e.latlng)
+        .setLatLon(e.latlon)
         .setContent(popupContent)
         .openOn(map);
     });
