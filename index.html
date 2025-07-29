@@ -53,7 +53,7 @@
     });
 
     // Skriv in din Google Apps Script Web App URL här:
-    const scriptURL = "https://script.google.com/macros/s/AKfycbz8x8K_Ce5exC3bKARYnVKtQgXAAWyMj2oUixSz4iTibXpD-82Ikx2x4r3A3jK7xYgz/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzWe2hKIqUNTwinX0SwVCB91bIIcqEFiafxG6rhdGspuOs4mTlwTld6Tn_pWZvaMBgS/exec";
 
     window.saveChessboard = function(lat, lon) {
       var name = document.getElementById("chessName").value || "Namnlös plats";
@@ -79,7 +79,7 @@
 
     // Hämta alla marker från Google Sheets
     function loadChessboards() {
-      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJK6pWDQcZVRX9xh6Ha-Vvwc8s7M1MPlmP8PJV4dcj8_lxGNv6-6lTB5ykPbvc4WiZ8VPKUO8RdUOs/pub?gid=0&single=true&output=csv";
+      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgz13PmnINoNxPJP3AMFBidYJuXi7RDDZCD1lkFbAALt2CgR0yFWSFycu5fZltVGpPlO-W9Dp-osrS/pub?output=csv";
       fetch(sheetURL)
         .then(res => res.text())
         .then(csv => {
