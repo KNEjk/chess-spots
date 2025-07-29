@@ -51,22 +51,22 @@
     }
 
     // Visa popup med formulär vid klick på kartan
-    map.on('click', function(e) {
-      var lat = e.latlng.lat.toFixed(5);
-      var lon = e.latlng.lng.toFixed(5);
+map.on('click', function(e) {
+  var lat = e.latlng.lat.toFixed(5);
+  var lon = e.latlng.lng.toFixed(5);
 
-      var popupContent = `
-        <b>Nytt schackbord</b><br>
-        <label>Platsens namn:<br><input type='text' id='chessName'></label><br>
-        <label>Beskrivning:<br><textarea id='chessInfo'></textarea></label>
-        <button onclick='saveChessboard(${lat}, ${lon})'>Lägg till</button>
-      `;
+  var popupContent = `
+    <b>Nytt schackbord</b><br>
+    <label>Platsens namn:<br><input type='text' id='chessName'></label><br>
+    <label>Beskrivning:<br><textarea id='chessInfo'></textarea></label>
+    <button onclick='saveChessboard(${lat}, ${lon})'>Lägg till</button>
+  `;
 
-      L.popup()
-        .setLatLng(e.latlng)
-        .setContent(popupContent)
-        .openOn(map);
-    });
+  L.popup()
+    .setLatLng(e.latlng)
+    .setContent(popupContent)
+    .openOn(map);
+});
 
     // Din Google Apps Script Web App URL (byt ut mot din egen)
     const scriptURL = "https://script.google.com/macros/s/AKfycbzC20ZxGYjL7AZSbPIGriAIYYAIuhvDVhflJqW8gt_8kyW8jbGnBnda082rPg_vrPO-/exec";
