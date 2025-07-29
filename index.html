@@ -11,10 +11,22 @@
     .leaflet-popup-content input, .leaflet-popup-content textarea {
       width: 100%;
       margin-top: 5px;
+      box-sizing: border-box;
     }
     .leaflet-popup-content button {
       margin-top: 10px;
       display: block;
+      width: 100%;
+      padding: 6px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .leaflet-popup-content button:hover {
+      background-color: #218838;
     }
   </style>
 </head>
@@ -23,21 +35,25 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([59.3293, 18.0686], 5); // Stockholm
+    // Initiera kartan centrerad på Stockholm med zoom 5
+    var map = L.map('map').setView([59.3293, 18.0686], 5);
 
+    // Lägg till OpenStreetMap-tilelager
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    // Funktion för att lägga till en markör på kartan
     function addMarker(board) {
       L.marker([board.lat, board.lon])
         .addTo(map)
         .bindPopup("<b>" + board.name + "</b><br>" + board.info);
     }
 
+    // Visa popup med formulär vid klick på kartan
     map.on('click', function(e) {
-      var lat = e.latlon.lat.toFixed(5);
-      var lon = e.latlon.lon.toFixed(5);
+      var lat = e.latlng.lat.toFixed(5);
+      var lon = e.latlng.lng.toFixed(5);
 
       var popupContent = `
         <b>Nytt schackbord</b><br>
@@ -47,52 +63,54 @@
       `;
 
       L.popup()
-        .setLatLon(e.latlon)
+        .setLatLng(e.latlng)
         .setContent(popupContent)
         .openOn(map);
     });
 
-    // Skriv in din Google Apps Script Web App URL här:
+    // Din Google Apps Script Web App URL (byt ut mot din egen)
     const scriptURL = "https://script.google.com/macros/s/AKfycbzC20ZxGYjL7AZSbPIGriAIYYAIuhvDVhflJqW8gt_8kyW8jbGnBnda082rPg_vrPO-/exec";
 
-   window.saveChessboard = function(lat, lon) {
-  var name = document.getElementById("chessName").value || "Namnlös plats";
-  var info = document.getElementById("chessInfo").value || "Ingen beskrivning.";
-  var board = { name, lat, lon, info };
-  addMarker(board);
-  map.closePopup();
+    // Funktion för att skicka data till Google Sheets via Web App
+    window.saveChessboard = function(lat, lon) {
+      var name = document.getElementById("chessName").value || "Namnlös plats";
+      var info = document.getElementById("chessInfo").value || "Ingen beskrivning.";
+      var board = { name, lat, lon, info };
+      addMarker(board);
+      map.closePopup();
 
-  console.log("Skickar till script:", board);
+      console.log("Skickar till script:", board);
 
-  fetch(scriptURL, {
-    method: 'POST',
-    body: JSON.stringify(board),
-    headers: { 'Content-Type': 'application/json' }
-  })
-  .then(response => response.text())
-  .then(data => {
-    console.log('Svar från Google Sheets:', data);
-    alert("Schackbordet har lagts till och skickats till databasen.");
-  })
-  .catch(error => {
-    console.error('Fel vid sparande:', error);
-    alert("Fel vid sparande: " + error.message);
-  });
-}
+      fetch(scriptURL, {
+        method: 'POST',
+        body: JSON.stringify(board),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(response => response.text())
+      .then(data => {
+        console.log('Svar från Google Sheets:', data);
+        alert("Schackbordet har lagts till och skickats till databasen.");
+      })
+      .catch(error => {
+        console.error('Fel vid sparande:', error);
+        alert("Fel vid sparande: " + error.message);
+      });
+    }
 
-    // Hämta alla marker från Google Sheets
+    // Funktion för att läsa in befintliga schackbord från Google Sheets (CSV publicerad som "publik")
     function loadChessboards() {
-      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgz13PmnINoNxPJP3AMFBidYJuXi7RDDZCD1lkFbAALt2CgR0yFWSFycu5fZltVGpPlO-W9Dp-osrS/pub?output=csv";
+      const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgz13PmnINoNxPJP3AMFBidYJuXi7RDDZCD1lkFbAALt2CgR0yFWSFycu5fZltVGpPlO-W9Dp-osrS/pub?gid=0&single=true&output=csv";
       fetch(sheetURL)
         .then(res => res.text())
         .then(csv => {
-          const rows = csv.split("\n").slice(1); // Skippa header
+          const rows = csv.split("\n").slice(1); // Skippa header-raden
           rows.forEach(row => {
             const [name, info, lat, lon] = row.split(",");
             if (!name || !lat || !lon) return;
             addMarker({ name, info, lat: parseFloat(lat), lon: parseFloat(lon) });
           });
-        });
+        })
+        .catch(error => console.error("Fel vid inläsning av schackbord:", error));
     }
 
     loadChessboards();
